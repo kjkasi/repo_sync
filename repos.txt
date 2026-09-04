@@ -18,3 +18,4 @@ https://github.com/sqlalchemy/sqlalchemy.git
 https://github.com/wagtail/wagtail-transfer.git
 https://github.com/wagtail/wagtail.git
 https://github.com/Zoo-Code-Org/Zoo-Code-Docs.git
+https://github.com/zed-industries/zed.git

@@ -125,11 +125,31 @@ def clone_repository(url: str, path: Path) -> None:
         raise RuntimeError(result.stderr.strip() or "git clone failed")
 
 
+def _detect_default_branch(path: Path) -> str:
+    """Detect the default branch name (main/master) from origin/HEAD."""
+    result = _run_git(["symbolic-ref", "refs/remotes/origin/HEAD"], cwd=path)
+    if result.returncode == 0:
+        ref = result.stdout.strip()
+        if ref.startswith("refs/remotes/origin/"):
+            return ref[len("refs/remotes/origin/"):]
+    for candidate in ("main", "master", "dev"):
+        result = _run_git(["rev-parse", "--verify", f"origin/{candidate}"], cwd=path)
+        if result.returncode == 0:
+            return candidate
+    return "main"
+
+
 def update_repository(path: Path) -> None:
-    """Update the repo with a fast-forward-only pull (never rewrites local work)."""
-    result = _run_git(["pull", "--ff-only", "--depth", "1"], cwd=path)
+    """Update the repo by fetching and resetting to the remote default branch."""
+    result = _run_git(["fetch", "origin"], cwd=path)
     if result.returncode != 0:
-        msg = result.stderr.strip() or "git pull --ff-only failed"
+        msg = result.stderr.strip() or "git fetch failed"
+        raise RuntimeError(msg)
+
+    branch = _detect_default_branch(path)
+    result = _run_git(["reset", "--hard", f"origin/{branch}"], cwd=path)
+    if result.returncode != 0:
+        msg = result.stderr.strip() or f"git reset --hard origin/{branch} failed"
         raise RuntimeError(msg)
 
 
