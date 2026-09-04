@@ -141,6 +141,10 @@ def _detect_default_branch(path: Path) -> str:
 
 def update_repository(path: Path) -> None:
     """Update the repo by fetching and resetting to the remote default branch."""
+    lock = path / ".git" / "index.lock"
+    if lock.exists():
+        lock.unlink()
+
     result = _run_git(["fetch", "origin"], cwd=path)
     if result.returncode != 0:
         msg = result.stderr.strip() or "git fetch failed"
